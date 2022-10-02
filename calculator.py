@@ -36,9 +36,18 @@ class JanelaPrincipal(QMainWindow, Ui_CalcAndriel):
 
     def inverter(self):
         cima = self.total_completo.text()
-        baixo = '-' + self.visor.text()
+        baixo = self.visor.text()
+        if baixo[0] == '-':
+            primeiro = baixo[0]
+            conta = list(baixo)
+            del conta[0]
+            new = ''
+            for n in conta:
+                new += n
+        else:
+            new = '-' + self.visor.text()
         self.total_completo.setText(cima)
-        self.visor.setText(baixo)
+        self.visor.setText(new)
     def push0(self):
         cima = self.total_completo.text() + '0'
         baixo = self.visor.text() + '0'
@@ -139,7 +148,7 @@ class JanelaPrincipal(QMainWindow, Ui_CalcAndriel):
         baixo = self.visor.text() + '%'
         self.total_completo.setText(cima)
         self.visor.setText(baixo)
-        self.calcular()
+        self.calcular('%')
     def limpar_numero(self):
         self.visor.setText('')
     def limpar_visor(self):
@@ -158,15 +167,17 @@ class JanelaPrincipal(QMainWindow, Ui_CalcAndriel):
     def calcular(self, unico = ''):
         cont = 0
         conta = self.visor.text()
-        for i in self.operacoes:
-            if i in conta:
+        for i in conta:
+            if i in self.operacoes:
                 cont += 1
         if ',' in conta:
             conta = conta.replace(',', '.')
-        if cont == 1 and unico == '=':
+        if 1<=cont<=2 and unico == '=':
             resultado = self.calculo(conta)
             self.visor.setText(resultado)
         elif cont == 1 and unico != '=':
+            pass
+        elif cont == 2 and conta[0] == '-':
             pass
         else:
             ultimo = conta[-1]
@@ -175,13 +186,22 @@ class JanelaPrincipal(QMainWindow, Ui_CalcAndriel):
             new = ''
             for n in conta:
                 new += n
-            resultado = self.calculo(new) + ultimo
-            self.visor.setText(resultado)
-
-    def calculo(self, oper):
-        for numero in oper:
-            if numero in self.operacoes and (numero != oper[0] or numero == '√'):
-                a,b = oper.split(numero)
+            if unico == '%':
+                resultado = self.calculo(new, '%')
+                self.visor.setText(resultado)
+            else:
+                resultado = self.calculo(new) + ultimo
+                self.visor.setText(resultado)
+    def calculo(self, oper, por=''):
+        for indice, numero in enumerate(oper):
+            if (numero in self.operacoes and indice != 0) or numero == '√':
+                if oper.count('-') > 1:
+                    c,a,b = oper.split(numero)
+                    a = '-' + str(float(a))
+                else:
+                    a,b = oper.split(numero)
+                if por == '%':
+                    b = str(float(b)/100*float(a))
                 match numero:
                     case '+':
                         resultado = float(a) + float(b)
@@ -195,7 +215,6 @@ class JanelaPrincipal(QMainWindow, Ui_CalcAndriel):
                         resultado = float(a) ** 2
                     case '√':
                         resultado = math.sqrt(float(b))
-
         resultado = str(round(resultado, 4))
         if '.' in resultado:
             resultado = resultado.replace('.', ',')
